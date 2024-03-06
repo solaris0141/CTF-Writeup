@@ -30,7 +30,7 @@ We are given a .cap file and the challenge description mentions about cracking t
 
 ## Steganography/Zombiefy
 
-#### *kowai* [file]()
+#### *kowai* [file](https://github.com/solaris0141/CTF-Writeup/edit/main/rENTASCTF2024/kowai)
 
 
 
