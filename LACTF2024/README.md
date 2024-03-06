@@ -99,7 +99,7 @@ This key is only 106 characters long which means we are still missing 55 charact
 
 Now we are still missing 23 characters of the key, but it should be alright if we just append some 23 long characters into the end to make sure the key loops correctly, then we should be able to observe some parts of the text unencrypted. 
 
-![cyberchef](https://github.com/solaris0141/CTF-Writeup/edit/main/LACTF2024/cyberchef.jpg)
+![cyberchef](cyberchef.jpg)
 
 
 ### Flag
