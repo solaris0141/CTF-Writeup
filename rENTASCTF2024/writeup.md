@@ -44,5 +44,71 @@ After extracting data using the jdvrif tool, we are able to obtain an mp3 file. 
 ### Flag
 > RWSC{kur0n3kO}
 
+## web/Bring your own script
+
+This challenge consist of a webpage that lists out a bunch of subdirectories that are named with emojis. 
+![web1](web1.jpg)
+
+Once I entered into 5 subdirectories, the webpages stops displaying a list of emoji subdirectories and instead a **No directories found**, indicating the end of the subdirectory. 
+![web2](web2.jpg)
+
+### Solution
+To tackle this challenge, we need to write a script that properly traverse through each and every possible subdirectory combinations by brute forcing and there will definitely be one webpage that doesn't display the **No directories found**. The script first of all uses **requests** to send a GET request and filter out all the emojis by placing them into a list. This step is repeated everytime we enter into a new subdirectory until we reach the fifth subdirectory, then we change into checking whether the page displays the word **No directories found**. 
+
+```python
+import requests
+
+def searchAllEmoji(url):
+    res = requests.get(url)
+    text = list(res.text)
+    curr_emoji = []
+    emoji = ""
+    i = 0
+    while i != len(text):
+        if ord(text[i]) > 128: 
+            while ord(text[i]) > 128:
+                emoji += text[i]
+                i += 1
+            curr_emoji.append(emoji)
+            emoji = ""
+        i += 1
+    return curr_emoji
+
+base_directory = 'https://byos.ctf.rawsec.com/root/'
+a = searchAllEmoji(base_directory)
+for i in a:
+    new_directory = base_directory + i + '/'
+    print(new_directory)
+    b = searchAllEmoji(new_directory)
+    for j in b:
+        new_directory2 = new_directory + j + '/'
+        print(new_directory2)
+        c = searchAllEmoji(new_directory2)
+        for k in c:
+            new_directory3 = new_directory2 + k + '/'
+            print(new_directory3)
+            d = searchAllEmoji(new_directory3)
+            for l in d:
+                new_directory4 = new_directory3 + l + '/'
+                print(new_directory4)
+                e = searchAllEmoji(new_directory4)
+                for m in e:
+                    new_directory5 = new_directory4+ m + '/'
+                    print(new_directory5)
+                    response = requests.get(new_directory5).text
+                    if "No directories found" not in bruh:
+                        print(response)
+                        exit()
+                        
+```
+
+The webpage that breaks the loop is https://byos.ctf.rawsec.com/root/🤤🤕😃/😔😁😕😵/😺😪🥴😇/🥰🥶🤣😂/🤧😅/
+We can see the flag once we enter the correct web page. 
+![web3](web3.jpg)
+
+### Flag
+> RWSC{J4CKP0T}
+
+
 
 
