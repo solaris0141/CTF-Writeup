@@ -1,4 +1,4 @@
-LA CTF 2024 
+rENTAS CTF 2024 
 =====
 
 This CTF was really interesting with very unique challenges and I was only able to solve 4 crypto challenges. 
