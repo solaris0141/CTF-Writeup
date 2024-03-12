@@ -1,7 +1,7 @@
 rENTAS CTF 2024 
 =====
 
-This CTF was really interesting with very unique challenges and I was only able to solve 4 crypto challenges. 
+This was a local CTF qualifier event hosted in my own country. Challenges are really guessy and no clear directions, it relies a lot on being able to 'feel' what the challenge creator wants rather than 'solving' it the usual way. For example crypto is meant to be more of a maths oriented and finding ways to bypass the encryptions but this CTF is more of a "guess the cipher" type challenge. 
 
 ---
 
