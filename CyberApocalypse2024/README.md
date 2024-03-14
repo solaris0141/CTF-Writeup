@@ -246,7 +246,7 @@ Ciphertext : b36c62d96d9daaa90634242e1e6c76556d020de35f7a3b248ed71351cc3f3da97d4
 This is basically the Tiny Encryption Algorithm (TEA) which is a very simplistic block cipher. We can just search for the decryption algorithm online and decrypt the ciphertext since the key is already given to us.
 
 <p align="center">
-![TEA](TEA_InfoBox_Diagram.png)
+<img src = "TEA_InfoBox_Diagram.png" />
 </p>
 
 ```python
@@ -528,8 +528,29 @@ b'V\x1b\xc6&\x04Z\xb0c\xec\x1a\tn\xd9\xa6(\xc1\xe1\xc5I\xf5\x1c\xd3\xa7\xdd\xa0\
 ```
 
 ### Solution
+This is an Elliptic Curve challenge but the value of modulus $p$ and $b$ is missing. The generator point $G$ and both points $A$ and $B$ are given, using these points we can substract the equations with each other to remove $b$ and then a *gcd* will let us obtain the value of $p$. 
 
+Equation 1,2 and 3
 
+$$ y_G^2 \equiv x_G^3 + 726x_G + b \mod p $$
+
+$$ y_A^2 \equiv x_A^3 + 726x_A + b \mod p $$
+
+$$ y_B^2 \equiv x_B^3 + 726x_B + b \mod p $$
+
+Substracting Equation 1 to 2 and 2 to 3
+
+$$ y_G^2 - y_A^2 \equiv x_G^3 - x_A^3 + 726(x_G - x_A) + b - b \mod p $$
+
+$$ y_A^2 - y_B^2 \equiv x_A^3 - x_B^3 + 726(x_A - x_B) + b - b \mod p $$
+
+Simplify and obtain p
+
+$$ y_G^2 - y_A^2 - (x_G^3 - x_A^3) -726(x_G - x_A) \equiv  0 \mod p $$
+
+$$ y_A^2 - y_B^2 - (x_A^3 - x_B^3) -726(x_A - x_B) \equiv  0 \mod p $$
+
+$$
 ### Flag
-> 
+> HTB{0rD3r_mUsT_b3_prEs3RveD_!!@!}
 
