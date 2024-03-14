@@ -245,6 +245,10 @@ Ciphertext : b36c62d96d9daaa90634242e1e6c76556d020de35f7a3b248ed71351cc3f3da97d4
 ### Solution
 This is basically the Tiny Encryption Algorithm (TEA) which is a very simplistic block cipher. We can just search for the decryption algorithm online and decrypt the ciphertext since the key is already given to us.
 
+<p align="center">
+![TEA](TEA_InfoBox_Diagram.png)
+</p>
+
 ```python
 from binascii import unhexlify
 
