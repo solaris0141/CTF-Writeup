@@ -544,13 +544,92 @@ $$ y_G^2 - y_A^2 \equiv x_G^3 - x_A^3 + 726(x_G - x_A) + b - b \mod p $$
 
 $$ y_A^2 - y_B^2 \equiv x_A^3 - x_B^3 + 726(x_A - x_B) + b - b \mod p $$
 
-Simplify and obtain p
+Simplify
 
 $$ y_G^2 - y_A^2 - (x_G^3 - x_A^3) -726(x_G - x_A) \equiv  0 \mod p $$
 
 $$ y_A^2 - y_B^2 - (x_A^3 - x_B^3) -726(x_A - x_B) \equiv  0 \mod p $$
 
-$$
+We can find the gcd of these 2 equations since they are both multiples of $p$
+
+$$ y_G^2 - y_A^2 - (x_G^3 - x_A^3) -726(x_G - x_A) = k_1p $$
+
+$$ y_A^2 - y_B^2 - (x_A^3 - x_B^3) -726(x_A - x_B) = k_2p $$
+
+After obtaining $p$, we can easily get back the value of $b$
+
+$$ b \equiv y^2 - x^3 - 726x \mod p$$
+
+```sage
+a = 726 
+xG = 926644437000604217447316655857202297402572559368538978912888106419470011487878351667380679323664062362524967242819810112524880301882054682462685841995367 
+yG = 4856802955780604241403155772782614224057462426619061437325274365157616489963087648882578621484232159439344263863246191729458550632500259702851115715803253
+xA = 6174416269259286934151093673164493189253884617479643341333149124572806980379124586263533252636111274525178176274923169261099721987218035121599399265706997
+yA = 2456156841357590320251214761807569562271603953403894230401577941817844043774935363309919542532110972731996540328492565967313383895865130190496346350907696 
+xB = 4226762176873291628054959228555764767094892520498623417484902164747532571129516149589498324130156426781285021938363575037142149243496535991590582169062734
+yB = 425803237362195796450773819823046131597391930883675502922975433050925120921590881749610863732987162129269250945941632435026800264517318677407220354869865
+
+left1 = yA^2 - yB^2 -(xA^3 - xB^3) -a*(xA -xB)
+left2 = yG^2 - yA^2 -(xG^3 - xA^3) -a*(xG -xA)
+left3 = yG^2 - yB^2 -(xG^3 - xB^3) -a*(xG -xB)
+
+p = gcd(left1,left2)
+assert is_prime(p)
+assert(p == gcd(left3,left2))
+assert(p == gcd(left3,left1))
+b = (yG^2 - xG^3 - (a*xG)) % p
+
+print(p)
+print(b)
+F = GF(p)
+E = EllipticCurve(F, [a,b])
+print(E.order())
+```
+
+We can find that the order of the curve is 
+> 6811640204116707417092117962115673978365477767365408659433165386030330695774842975950864518820891774127689003723319868798748651155450639754051764297493817
+
+Putting this value to *factordb* lets us obtain the prime factors of this value thus allowing us to use the Pohlig-Hellman algorithm to solve for the private keys. Pohlig-Hellman algorithm basically aims to reduce the discrete log problems into smaller groups which makes the discrete log more possible to be calculated in computational time. The results of the smaller discrete log problems can then be combined to reconstruct the private key back with Chinese remainder Theorem.
+
+```sage
+G = E(xG,yG)
+A = E(xA,yA)
+B = E(xB,yB)
+
+primefac = [3, 11, 11083, 158891976157]
+disclogs = []
+for factors in primefac:
+    t = int(order) // int(factors)
+    res = discrete_log(t*A,t*G,operation="+")
+    disclogs += [res]
+
+
+priv_a = crt(disclogs,primefac)
+C = priv_a * B
+secret = C[0]
+print("secret=", secret)
+```
+
+With this we will be able to obtain the secret value
+> 926644437000604217447316655857202297402572559368538978912888106419470011487878351667380679323664062362524967242819810112524880301882054682462685841995367
+
+Now we just need to put the value as key into AES and decrypt the ciphertext to get our flag. 
+```python
+from Crypto.Cipher import AES
+from hashlib import sha256
+from Crypto.Util.number import long_to_bytes
+
+secret = 926644437000604217447316655857202297402572559368538978912888106419470011487878351667380679323664062362524967242819810112524880301882054682462685841995367
+enc = b'V\x1b\xc6&\x04Z\xb0c\xec\x1a\tn\xd9\xa6(\xc1\xe1\xc5I\xf5\x1c\xd3\xa7\xdd\xa0\x84j\x9bob\x9d"\xd8\xf7\x98?^\x9dA{\xde\x08\x8f\x84i\xbf\x1f\xab'
+hash = sha256()
+hash.update(long_to_bytes(secret))
+
+key = hash.digest()[16:32]
+iv = b'u\x8fo\x9aK\xc5\x17\xa7>[\x18\xa3\xc5\x11\x9en'
+cipher = AES.new(key, AES.MODE_CBC, iv)
+print(cipher.decrypt(enc))
+```
+
 ### Flag
 > HTB{0rD3r_mUsT_b3_prEs3RveD_!!@!}
 
