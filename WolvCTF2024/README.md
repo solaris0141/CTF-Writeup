@@ -212,11 +212,48 @@ $$ h= pt[1] \otimes ct[0]$$
 
 Since the first part of the plaintext and ciphertext is not important in the conditions to obtain the flag at all, we can choose to manipulate ct[0] in a way that makes $pt[1] = doubledelete\0\0\0\0$ when decrypted. 
 
-![cbc](blocked1ss.jpg)
+$$ newct[0] = doubledelete\0\0\0\0 \otimes h $$
+
+<p align="center">
+<img src = "blocked1ss.jpg" />
+</p>
+
+Now we can just send the new token (iv + ct[0] + newct[1]) back to the server and it should be able to decrypt and receive the username "doubledelete".
+
+
+
+```python
+from pwn import *
+from binascii import hexlify, unhexlify
+r = remote("blocked1.wolvctf.io", 1337)
+
+print(r.recvuntil(b"you are logged in as: ").decode())
+username = r.recvline().decode()[:-1]
+assert len(username) == 12
+print(r.recvuntil(b"> ").decode())
+r.sendline(b"2")
+token = r.recvline().decode()
+print(token)
+print(r.recvuntil(b"> ").decode())
+iv = token[:32]
+ct1 = token[32:64]
+ct2 = token[64:96]
+f = xor(unhexlify(ct1), str(username).encode() + b'\0\0\0\0')
+ct1 = hexlify(xor(f, b'doubledelete\0\0\0\0')).decode()
+newtoken = iv + ct1 + ct2
+print(newtoken)
+r.sendline(b'1')
+print(r.recvuntil(b"> ").decode())
+r.sendline(newtoken.encode())
+print(r.recvline().decode())
+```
 
 ### Flag
-
+> wctf{th3y_l0st_th3_f1rst_16_byt35_0f_th3_m3ss4g3_t00}
 
 ## crypto/Blocked2
+
+
+
 
 ## crypto/TagSeries1
