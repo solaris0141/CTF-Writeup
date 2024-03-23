@@ -212,6 +212,7 @@ $$ h= pt[1] \otimes ct[0]$$
 
 Since the first part of the plaintext and ciphertext is not important in the conditions to obtain the flag at all, we can choose to manipulate ct[0] in a way that makes $pt[1] = doubledelete\0\0\0\0$ when decrypted. 
 
+![cbc](blocked1ss.jpg)
 
 ### Flag
 
