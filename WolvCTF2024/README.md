@@ -204,7 +204,14 @@ def main():
 
 main()
 ```
+
 ### Solution
+Looking at this server script, we can see that it's an implementation of AES CBC and it requires us to somehow manipulate the ciphertext so that when the server decrypts it will be able to detect the username *doubledelete*. We can get our own password reset token with the second selection and we could know how the plaintext of this token would look like as well. This means we can obtain the byte values (let's call it $h$) 
+
+$$ h= pt[1] \otimes ct[0]$$
+
+Since the first part of the plaintext and ciphertext is not important in the conditions to obtain the flag at all, we can choose to manipulate ct[0] in a way that makes $pt[1] = doubledelete\0\0\0\0$ when decrypted. 
+
 
 ### Flag
 
