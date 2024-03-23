@@ -318,11 +318,109 @@ This is a modified version of the Blocked 1 challenge, this time a custom AES EC
 <img src = "blocked2ss.jpg" />
 </p>
 
+The vulnerability of this challenge is that the iv is given together with the ciphertext just like the Blocked 1 challenge which is how we will be able to decrypt the rest of the plaintext blocks. Looking at the encryption scheme, we can see that the last block of ciphertext is always just a direct AES ECB encryption from the last block of plaintext. This means that we can get the ECB encryption fo whatever block of plaintext then xor with the known ciphertext to recover the next block of plaintext. And luckily, the IV given to us will be the first to start this loop of decryption. 
 
+1. Send IV to get E(IV)
+2. $pt[0] = E(iv) \otimes ct[0]$
+3. Repeat the process but shift to the next block (send pt[0] and xor with ct[1] to get pt[1])
+
+```python
+from pwn import *
+from binascii import unhexlify,hexlify
+
+r = remote('blocked2.wolvctf.io', 1337)
+r.recvuntil(b"you have one new encrypted message:\n").decode()
+encflag = r.recvline().decode()[:-1]
+
+
+msg = []
+
+r.recvuntil(b" > ")
+r.sendline(encflag[:32].encode())
+res = r.recvline().decode()[:-1]
+Eiv = unhexlify(res[64:96])
+msg.append(xor(Eiv,unhexlify(encflag[32:64])))
+print(msg)
+
+for i in range(16):
+    r.recvuntil(b" > ")
+    r.sendline(hexlify(msg[i]))
+    res = r.recvline().decode()[:-1]
+    Ept = unhexlify(res[64:96])
+    msg.append(xor(Ept,unhexlify(encflag[32*(i+2): 32*(i+3)])))
+
+print("".join([i.decode() for i in msg]))
+```
 
 ### Flag
 > wctf{s0m3_g00d_s3cur1ty_y0u_h4v3_r0lling_y0ur_0wn_crypt0_huh}
 
-
-
 ## crypto/TagSeries1
+
+#### *chal.py*
+```python
+import sys
+import os
+from Crypto.Cipher import AES
+
+MESSAGE = b"GET FILE: flag.txt"
+QUERIES = []
+BLOCK_SIZE = 16
+KEY = os.urandom(BLOCK_SIZE)
+
+
+def oracle(message: bytes) -> bytes:
+    aes_ecb = AES.new(KEY, AES.MODE_ECB)
+    return aes_ecb.encrypt(message)[-BLOCK_SIZE:]
+
+
+def main():
+    for _ in range(3):
+        command = sys.stdin.buffer.readline().strip()
+        tag = sys.stdin.buffer.readline().strip()
+        if command in QUERIES:
+            print(b"Already queried")
+            continue
+
+        if len(command) % BLOCK_SIZE != 0:
+            print(b"Invalid length")
+            continue
+
+        result = oracle(command)
+        if command.startswith(MESSAGE) and result == tag and command not in QUERIES:
+            with open("flag.txt", "rb") as f:
+                sys.stdout.buffer.write(f.read())
+                sys.stdout.flush()
+        else:
+            QUERIES.append(command)
+            assert len(result) == BLOCK_SIZE
+            sys.stdout.buffer.write(result + b"\n")
+            sys.stdout.flush()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Solution
+The server requires us to send a command and a tag where the command starts with the set message and the tag must match with the return from the oracle function. The oracle function will take in the string from the command input and encrypts it with AES ECB but only returns the last block of ciphertext. Basically, we could send a set string with one block of length to the command just to receive back the ciphertext of the set string block. Then we can just send to the server the set message and make sure the last block is the same as the set string we sent previously so that the when we send the ciphertext as the tag, we will get a match and thus obtain the flag. 
+
+```python
+from pwn import *
+
+MESSAGE = b"GET FILE: flag.txt"
+r = remote("tagseries1.wolvctf.io", 1337)
+r.recvline()
+r.sendline(b"aaaaaaaaaaaaaaaa")
+r.sendline(b"aaaaaaaaaaaaaaaa")
+res = r.recvline()[:-1]
+print(res)
+msg = MESSAGE + b"a"*14 + b"a"*16
+r.sendline(msg)
+r.sendline(res)
+flag = r.recvline().decode()
+print(flag)
+```
+
+### Flag
+> wctf{C0nGr4ts_0n_g3tt1ng_p4st_A3S}
