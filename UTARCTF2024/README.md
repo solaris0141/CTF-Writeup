@@ -78,9 +78,57 @@ if __name__ == '__main__':
 ```
 
 ### Solution 
+Essentially, two large primes $p$ and $q$ are generated with the _**getPrime()**_ function based on the 128-bit prime number, **coefficient** which we will call it $c$. The flag is then split in half into $m1$ and $m2$ and encrypted seperately. The _**encrypt()**_ function is as below:
+
+$$c1 \equiv m_i * (m_i + c) \mod n$$
+
+$c2$ is also calculated with the same method as $c1$ just that it has the message padded to 256 bits first, and from what I've analyzed, c2 is completely useless to our solution later on. 
+The vulnerable part of this encryption lies on the prime generation function of $p$ and $q$. 
+
+$$ p = (3* c * a_1 + 2) $$
+
+$$ q = (3* c *b_1 + 2) $$
+
+which means
+
+$$ n = (3* c * a_1 + 2)(3* c *b_1 + 2) $$
+
+_ps: the n is then recalculated with another_ $a_2$ _and_ $b_2$ _value for encrypting the second half of the flag_
+
+With all of this prerequisites known, it's clear that finding the value of $c$ will leads to solving this challenge. Since there is two $n$ values, I first thought of possibly using **gcd** to somehow return us with a composite number that has prime factor of $c$ since $d$ is prime. 
+
+$$ n = (3ca_1 + 2)(3cb_1 + 2) $$
+
+$$ n = (3ca_1)(3cb_1) + 6ca_i + 6cb_i + 4 $$
+
+$$ n = 9c^2a_ib_i + 6c(a_i + b_i) + 4 $$
 
 
+after removing the $4$ and then factorising the equation, we get
 
+
+$$ n = 3c (a_ib_i + 2(a_i + b_i)) $$
+
+with this now it's clear that gcd is possible for us to obtain the value of $c$. Value of $a$ and $b$ differs a lot between two of the $n$ values so the chances of having a gcd there is low in possibility, at most we would have some noise in the returning value which can be easily factored out.
+
+```sage
+n1 = 93768948782729745478599497793422837990844683777054239378160474776560328573740431328119069546474726108930506737169994788955100441012384360021152667154287992695010195576758316949585621551596158372376345419456965488254521532147792713935363300735987030988082563979975500168572577260733535458985853917764527363407769270888828243816895641732445160252301964925541012207546553786760547571437309
+
+n2 = 91025568464739694140466003159234293768290991283984557403047262623528591078227010433420470804003649933884386662079743329798798525248580861464365943451120270370457258649269769883650838118032727366611574875678349888523527808307940817294050887454976727571614338539148795127773589683011325602555167585577233867721677509481441225602003683137182844508449837448007714031771752450966624270918589 
+
+c = gcd((n1-4)/3, (n2-4)/3).factor()[-1][0]
+```
+
+running this on sage gave me the 128 bit prime number and confirmed that it is indeed the value of $c$
+> c = 317746892711557615738201753984488906029
+
+Now we just need to construct the polynomial equations and use sage to solve it
+
+$$ m*(m + c) = c1 $$
+
+$$ m*(m + c) - c1 = 0 $$
+
+applying this method to c2 and we can get both parts of the flag. 
 
 ```sage
 from Crypto.Util.number import long_to_bytes
