@@ -79,6 +79,195 @@ Key:
 
 ## crypto/Bad RSA key
 
+#### *id_rsa.pub*
+```txt
+ssh-rsa AAAAB3NzaC1yc2EAAAEBAPOVnZeOAuufBt7z8zXY+K/XYJlR3axgtxS2wirw+pEvIQs0IGvSSpYBx430oCdfEH/Tq1UtlQV+uTTnG93NcEXCSxhYe4yPz1rdTF2D8Md8lNycUMvkOOK2e6/TFjO2qvF4HZDDrW8D0DezMhgBsjVG1IPmfiYGf3siNH3bwMLVks6BTL9d/MwUFDfxTgs5kPiAYeXwuuXwHj+nDbDpYF58/VdenIHv7sUpwz/ZA3og/YrNUTrJY3doMT5j+YOK41Ec3QqaK1FvIUjI1HWjYKBjWUSXOe7NJRq7QrAUVz5Dny+kVzVXslaZ/8EeYxzo7pdahuficrz192qTRQNI/j8AAAEBA2cZjWtWFOlYE63Y8ipHF7xyvh6r2TPRuGlE/bdbjtIwvmLX0badIiCVwSjIb4IBLssRYZH9nQGKbQL4TbJ7xRohMH3Ib0v3ccaRwUPlq+VJtb0tbrGiH9YnDn4bSP4GEfuy4bCzUk5vTei05KNF2kShPegltyYI22x8SkC3gmbmyHu/3va0g4HUnEUHpYvNR7dtZLRZCLFYvX68Taywsc/WwsGVdPQOsu/Q6eENxwBcrTm8r1K56sOHM2jWkDHF5yRoSkTwaO/R09wJbZtdZBHli97kPka5mg0ElLnbKBla+QGv8TDUpuID2tCNpX+n5AJipbrbKjI+2ii0RparMF0=
+```
+
+The challenge gives us a SSH RSA public key and basically wants us to craft the private key to SSH into the machine and obtain the flag. So using **pycryptodome**, we extracted the modulus and exponent from the public key given and it was very clear to us that the exponent is way too huge of a number. According to Wiener's theorem, it's highly likely that this public key is vulnerbale to a Wiener's attack since the exponent is too large of a number. 
+
+### Solution
+To do a Wiener's attack, we can just use the python module **owiener** to attempt to get the private key. And we actually managed to get the private key value from the attack, now we just have to craft the key back into a format used by OpenSSH. 
+
+```python
+from cryptography.hazmat.primitives import serialization
+import owiener
+
+with open(r"FSIIEC2024\bad-rsa-key\id_rsa.pub", "rb") as keyfile:
+    pubkey = serialization.load_ssh_public_key(keyfile.read())
+
+numbers = pubkey.public_numbers()
+N = numbers.n
+e = numbers.e
+
+print(f"N: {N}")
+print(f"e: {e}")
+
+d = owiener.attack(e,N)
+print(d)
+```
+
+```python
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives import serialization
+from Crypto.PublicKey import RSA
+
+n = 109966163992903243770643456296093759130737510333736483352345488643432614201030629970207047930115652268531222079508230987041869779760776072105738457123387124961036111210544028669181361694095594938869077306417325203381820822917059651429857093388618818437282624857927551285811542685269229705594166370426152128895901914709902037365652575730201897361139518816164746228733410283595236405985958414491372301878718635708605256444921222945267625853091126691358833453283744166617463257821375566155675868452032401961727814314481343467702299949407935602389342183536222842556906657001984320973035314726867840698884052182976760066141
+e = 30749686305802061816334591167284030734478031427751495527922388099381921172620569310945418007467306454160014597828390709770861577479329793948103408489494025272834473555854835044153374978554414416305012267643957838998648651100705446875979573675767605387333733876537528353237076626094553367977134079292593746416875606876735717905892280664538346000950343671655257046364067221469807138232820446015769882472160551840052921930357988334306659120253114790638496480092361951536576427295789429197483597859657977832368912534761100269065509351345050758943674651053419982561094432258103614830448382949765459939698951824447818497599
+d = 4221909016509078129201801236879446760697885220928506696150646938237440992746683409881141451831939190609743447676525325543963362353923989076199470515758399
+
+key = RSA.construct((n, e, d))
+private_key_pem = key.export_key(format='PEM')
+with open('id_rsa_priv', 'wb') as pem_out:
+    pem_out.write(private_key_pem)
+```
+
+Now we can just SSH into the machine and get the flag. 
+![ssh to get flag](badrsakey.png)
+
+### Flag
+> FSIIECTF{cbd5b32902b96a7959cb40e34f1c6cca}
+
+## crypto/Des Des Des Des
+
+#### des_des_des_des.py
+```python
+from Crypto.Cipher import DES
+import random
+from Crypto.Util.Padding import pad, unpad
+
+a = b""
+b = b""
+c = b""
+d = b""
+FLAG = b"IIECTF{REDACTED}"
+
+def generateKey():
+	global a, b, c, d
+	a = (str(random.randint(0, 2048)).zfill(4)*3)[:8].encode()
+	b = (str(random.randint(0, 2048)).zfill(4)*3)[:8].encode()
+	c = (str(random.randint(0, 2048)).zfill(4)*3)[:8].encode()
+	d = (str(random.randint(0, 2048)).zfill(4)*3)[:8].encode()
+
+def encrypt(plaintext, a, b, c, d):
+	c1 = DES.new(a, mode=DES.MODE_ECB)
+	ct = c1.encrypt(pad(plaintext, 8))
+	c2 = DES.new(b, mode=DES.MODE_ECB)
+	ct = c2.encrypt(ct)
+	c3 = DES.new(c, mode=DES.MODE_ECB)
+	ct = c3.encrypt(ct)
+	c4 = DES.new(d, mode=DES.MODE_ECB)
+	ct = c4.encrypt(ct)
+	return ct.hex()
+
+generateKey()
+
+print("enc_flag =", encrypt(FLAG, a, b, c, d))
+plain = "pl@1ntxt"
+print("enc =", encrypt(plain.encode(), a, b, c, d))
+'''
+enc_flag = 1b15e71f37951e9950123c599921985e410be6aeb076cf5ebeac6810cce9bc06fcf07d6e4f33a1aa3c94dd00945dc96e
+enc = cf5fca567b2713cd288489671866baae
+'''
+```
+
+From looking at this script initially we can understand that the **encrypt()** function is essentially just encrypting the plaintext 4 times over with 4 different keys $a$, $b$, $c$, $d$ using DES-ECB.
+
+enc_flag = $E(E(E(E(flag,a),b),c),d)$
+enc = $E(E(E(E(plain,a),b),c),d)$
+
+### Solution
+The vulnerability of this encryption actully stems from the key generation function, where each keys are generated with only 2048 total key possibilities. This means that it should be easily brute-forcible in reasonable time. Still, since it's encrypting 4 times in a row, this means that we would need need to guess about $2048^4$ possible key combinations. Fortunately, since we have the **plain** and **enc**, we can do a way faster brute-forcing method called **Meet-in-the-Middle Attack** where we brute force both the encryption and decryption to match the results. 
+
+Essentially, 
+
+$$ Eres = E(E(plain,a_i),b_i) \quad i\in \set{0,...,2048} $$
+
+$$ Dres = D(D(enc,d_i),c_i) \quad i\in \set{0,...,2048} $$
+
+and there will be a matching case for $Eres = Dres$. When this match is found, means all of the keys are found as well. 
+
+```python
+from Crypto.Cipher import DES
+from Crypto.Util.Padding import pad, unpad
+from tqdm import tqdm
+
+plain = "pl@1ntxt"
+
+enc = bytes.fromhex("cf5fca567b2713cd288489671866baae")
+def encrypt(plaintext, a, b):
+    c1 = DES.new(a, mode=DES.MODE_ECB)
+    ct = c1.encrypt(pad(plaintext, 8))
+    c2 = DES.new(b, mode=DES.MODE_ECB)
+    ct = c2.encrypt(ct)
+    return ct
+
+def decrypt(ciphertext, c, d):
+    c3 = DES.new(d, mode=DES.MODE_ECB)
+    ct = c3.decrypt(ciphertext)
+    c4 = DES.new(c, mode=DES.MODE_ECB)
+    return c4.decrypt(ct)
+
+def brute_force_ab():
+    enc_dict = {}
+    for a in tqdm(range(2049)):
+        key_a = (str(a).zfill(4)*3)[:8].encode()
+        for b in range(2049):
+            key_b = (str(b).zfill(4)*3)[:8].encode()
+            encrypted = encrypt(plain.encode(), key_a, key_b)
+            enc_dict[encrypted.hex()] = (key_a, key_b)
+    return enc_dict
+
+def brute_force_cd(enc_dict):
+    for c in tqdm(range(2049)):
+        key_c = (str(c).zfill(4)*3)[:8].encode()
+        for d in range(2049):
+            key_d = (str(d).zfill(4)*3)[:8].encode()
+            decrypted = decrypt(enc, key_c, key_d)
+            if decrypted.hex() in list(enc_dict.keys()):
+                key_a, key_b = enc_dict[decrypted.hex()]
+                return key_a, key_b, key_c, key_d
+    return None
 
 
+enc_dict = brute_force_ab()
+keys = brute_force_cd(enc_dict)
+
+if keys:
+    key_a, key_b, key_c, key_d = keys
+    print(f"Found keys: a={key_a}, b={key_b}, c={key_c}, d={key_d}")
+else:
+    print("Keys not found.")
+```
+
+Took about 11 minutes for the brute force script to find the keys, I am assuming it would be faster if it was optimized further on Sage.
+![brute force result](desdesdes.png)
+
+Finally, we can obtain the flag by decrypting using the keys we found
+```python
+from Crypto.Cipher import DES
+a=b'11571157'
+b=b'19111911'
+c=b'08480848'
+d=b'02220222'
+
+enc_flag = bytes.fromhex("1b15e71f37951e9950123c599921985e410be6aeb076cf5ebeac6810cce9bc06fcf07d6e4f33a1aa3c94dd00945dc96e")
+enc = bytes.fromhex("cf5fca567b2713cd288489671866baae")
+def decrypt(ciphertext, a,b, c, d):
+    c1 = DES.new(d, mode=DES.MODE_ECB)
+    ct = c1.decrypt(ciphertext)
+    c2 = DES.new(c, mode=DES.MODE_ECB)
+    ct = c2.decrypt(ct)
+    c3 = DES.new(b, mode=DES.MODE_ECB)
+    ct = c3.decrypt(ct)
+    c4 = DES.new(a, mode=DES.MODE_ECB)
+    ct = c4.decrypt(ct)
+    return ct
+
+print(decrypt(enc_flag, a, b, c, d))
+```
+
+### Flag
+> FSIIECTF{20f414947ece3d264ccc44aa4f8a7f13}
 
