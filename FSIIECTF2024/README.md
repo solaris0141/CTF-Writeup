@@ -281,3 +281,6 @@ We are given a kdbx file (Keepass database file) and a rockyou.txt top 1000 list
 
 ### Flag
 > FSIIECTF{w3@k_p@55w0rd@r3_b@@@@@@@d}
+
+## rev/Sneaky
+
