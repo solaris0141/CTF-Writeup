@@ -24,6 +24,8 @@ Enc flag: Enc flag: NSY5LDcoMT8IFBVVSg9TGkdCRlVHCF0dEkNDBEBfA0FKFBNdFwhdHUMI
 
 ### Solution 
 The description hinted at XOR, so just put it into Cyberchef and xor with the flag format **FSIIECTF{**, this will only leak 9 characters of the key. Luckily, the result was a 8 characters long key so we can now just xor the encrypted flag with the obtained key to get our flag. 
+![xor with flag format](cyberchef2_1.png)
+![xor with key](cyberchef2_2.png)
 
 ### Flag
 > FSIIECTF{ae08d6c47605c8da63a24f89ac8ec8d0}
