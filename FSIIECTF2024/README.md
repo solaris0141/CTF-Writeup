@@ -271,3 +271,13 @@ print(decrypt(enc_flag, a, b, c, d))
 ### Flag
 > FSIIECTF{20f414947ece3d264ccc44aa4f8a7f13}
 
+##crypto/Keep John
+
+We are given a kdbx file (Keepass database file) and a rockyou.txt top 1000 list. Now obviously the challenge wants us to use **JohnTheRipper** to brute force the password hash for this Keepass database to obtain the flag, which is what we are going to do. The description also mentioned something about *using weak variations of passwords*, so just to be sure we will add the **--rules** arguement for our john. So after using keepass2john to convert the file to a hash, it took about 15 minutes for john to find the matching password hash. 
+
+![john](keepjohn_1.png)
+
+![flag](keepjohn_2.png)
+
+### Flag
+> FSIIECTF{w3@k_p@55w0rd@r3_b@@@@@@@d}
