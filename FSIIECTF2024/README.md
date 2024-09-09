@@ -284,3 +284,177 @@ We are given a kdbx file (Keepass database file) and a rockyou.txt top 1000 list
 
 ## rev/Sneaky
 
+First of all, use **upx** to unpack the file, we can then see that it's made with python using **strings** so we will use [pyinstxtracotr](https://github.com/extremecoders-re/pyinstxtractor) to extract the contents of the executable. After extracting all the contents, one of the file particularly looked interesting which is **sneaky.pyc**. We can see the file contains byte codes that seems to be hinting towards the flag. It starts with loading the flag variable and then string slicing the first 9 characters to check if it is equal to the flag format, and then slices the last character to check if it is equal to the right curly brace as well. 
+
+```pyc
+ 13           2 LOAD_FAST                0 (flag)
+              4 LOAD_CONST               0 (None)
+              6 LOAD_CONST               1 (9)
+              8 BINARY_SLICE
+             10 LOAD_CONST               2 ('FSIIECTF{')
+             12 COMPARE_OP              55 (!=)
+             16 POP_JUMP_IF_FALSE       10 (to 38)
+
+ 14          18 LOAD_GLOBAL              1 (NULL + fail)
+             28 CALL                     0
+             36 POP_TOP
+
+ 16     >>   38 LOAD_FAST                0 (flag)
+             40 LOAD_CONST               3 (-1)
+             42 LOAD_CONST               0 (None)
+             44 BINARY_SLICE
+             46 LOAD_CONST               4 ('}')
+             48 COMPARE_OP              55 (!=)
+             52 POP_JUMP_IF_FALSE       10 (to 74)
+
+ 17          54 LOAD_GLOBAL              1 (NULL + fail)
+             64 CALL                     0
+             72 POP_TOP
+```
+
+From line 74 onwards, we can see that it's slicing some index of the flag string, and then checking if it is equal to a hex character (obviously the hash), quitting only if it doesn't match. 
+
+```pyc
+ 20     >>   74 LOAD_FAST                0 (flag)
+             76 LOAD_CONST               1 (9)
+             78 BINARY_SUBSCR
+             82 LOAD_CONST               5 ('6')
+             84 COMPARE_OP              55 (!=)
+             88 POP_JUMP_IF_TRUE        16 (to 122)
+             90 LOAD_FAST                0 (flag)
+             92 LOAD_CONST               6 (15)
+             94 BINARY_SUBSCR
+             98 LOAD_CONST               5 ('6')
+            100 COMPARE_OP              55 (!=)
+            104 POP_JUMP_IF_TRUE         8 (to 122)
+            106 LOAD_FAST                0 (flag)
+            108 LOAD_CONST               7 (18)
+            110 BINARY_SUBSCR
+            114 LOAD_CONST               5 ('6')
+            116 COMPARE_OP              55 (!=)
+            120 POP_JUMP_IF_FALSE       10 (to 142)
+
+ 21     >>  122 LOAD_GLOBAL              1 (NULL + fail)
+            132 CALL                     0
+            140 POP_TOP
+
+ 23     >>  142 LOAD_FAST                0 (flag)
+            144 LOAD_CONST               8 (10)
+            146 BINARY_SUBSCR
+            150 LOAD_CONST               9 ('d')
+            152 COMPARE_OP              55 (!=)
+            156 POP_JUMP_IF_TRUE        32 (to 222)
+            158 LOAD_FAST                0 (flag)
+            160 LOAD_CONST              10 (14)
+            162 BINARY_SUBSCR
+            166 LOAD_CONST               9 ('d')
+            168 COMPARE_OP              55 (!=)
+            172 POP_JUMP_IF_TRUE        24 (to 222)
+            174 LOAD_FAST                0 (flag)
+            176 LOAD_CONST              11 (17)
+            178 BINARY_SUBSCR
+            182 LOAD_CONST               9 ('d')
+            184 COMPARE_OP              55 (!=)
+            188 POP_JUMP_IF_TRUE        16 (to 222)
+            190 LOAD_FAST                0 (flag)
+            192 LOAD_CONST              12 (28)
+            194 BINARY_SUBSCR
+            198 LOAD_CONST               9 ('d')
+            200 COMPARE_OP              55 (!=)
+            204 POP_JUMP_IF_TRUE         8 (to 222)
+            206 LOAD_FAST                0 (flag)
+            208 LOAD_CONST              13 (39)
+            210 BINARY_SUBSCR
+            214 LOAD_CONST               9 ('d')
+            216 COMPARE_OP              55 (!=)
+            220 POP_JUMP_IF_FALSE       10 (to 242)
+
+ 24     >>  222 LOAD_GLOBAL              1 (NULL + fail)
+            232 CALL                     0
+            240 POP_TOP
+```
+
+Line 76 - 84 basically slices out **flag[9]** and check if it's equal to **'6'**, and it continue slicing other indexes to do comparisons again and again. So what I did was that I followed through the whole file and just wrote a python script to build back the flag based on these comparisons. There are some parts where it did some arithmetic operations as well 
+
+```pyc
+ 32     >>  394 LOAD_FAST                0 (flag)
+            396 LOAD_CONST              23 (19)
+            398 BINARY_SUBSCR
+            402 LOAD_GLOBAL              3 (NULL + chr)
+            412 LOAD_GLOBAL              5 (NULL + ord)
+            422 LOAD_FAST                0 (flag)
+            424 LOAD_CONST               6 (15)
+            426 BINARY_SUBSCR
+            430 CALL                     1
+            438 LOAD_CONST              24 (2)
+            440 BINARY_OP               10 (-)
+            444 CALL                     1
+            452 COMPARE_OP              40 (==)
+            456 POP_JUMP_IF_FALSE       10 (to 478)
+
+ 33         458 LOAD_GLOBAL              7 (NULL + success)
+            468 CALL                     0
+            476 POP_TOP
+```
+
+This section 32 part of the byte code does things a bit differently with the flag checking. For this part, it basically slices **flag[19]** and compares it to the **flag[15]** character after doing some functions on it. Line 430 calls the ord function on **flag[15]** and then line 440 substracts 2 off from it then only the comparison is done. So essentially, it looks like this:
+
+```python
+flag[19] = chr(ord(flag[15]) - 2)
+```
+
+### Solution
+Now we can just write a simple script to build back the flag.
+```python
+flag = list(r"FSIIECTF{")
+flag  = flag + ['*' for i in range(32)]
+
+#394, 702, 820, 904
+flag[9] = '6'
+flag[15] = '6'
+flag[18] = '6'
+
+flag[10] = 'd'
+flag[14] = 'd'
+flag[17] = 'd'
+flag[28] = 'd'
+flag[39] = 'd'
+
+flag[11] = '2'
+flag[20] = '2'
+
+flag[12] = '1'
+flag[13] = '1'
+flag[16] = '1'
+flag[27] = '1'
+flag[33] = '1'
+flag[19] = chr(ord('6')-2)
+
+flag[21] = 'b'
+flag[29] = 'b'
+
+flag[22] = 'e'
+flag[35] = 'e'
+flag[40] = 'e'
+
+flag[23] = '9'
+flag[26] = '9'
+
+flag[24] = 'f'
+flag[36] = 'f'
+flag[25] = chr(ord('e')-45)
+
+flag[30] = '5'
+flag[31] = '5'
+flag[32] = chr(ord('5')+2)
+
+
+flag[34] = '0'
+flag[37] = '0'
+flag[38] = chr(ord('9')+40)
+
+print("".join(flag)+"}")
+```
+
+### Flag
+> FSIIECTF{6d211d61d642be9f891db55710ef0ade}
