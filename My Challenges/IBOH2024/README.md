@@ -152,3 +152,26 @@ Now we can just put this into the Zodiac Cipher decoder on dcode.fr to solve for
 
 ## Old MacData Had a Spy, E-I-E-I-O
 
+![full sheet](oldmac1.png)
+
+Based on the sheet music, we can see that a certain part of the bass side has some suspicious notes. Starting from the 3rd bar to the 9th bar, the bass side weirdly became quavers and only plays A and B only. This should obviously indicates that it's the Baconian Cipher. Taking a closer look, we can even see these small little characters on top of the eigth rests. 
+
+![zoomed in](oldmac2.png)
+
+Decoding the Baconian cipher and putting the characters in between the intended characters, we will get a shortened URL (bitly) which links us to the a drive file that has the flag in a comment. 
+> BIT.LY/8XLM9CS
+
+![flag](oldmac3.png)
+
+### Flag
+> IBOH24{3xf1ltr4ted_by_M()s1cal_B4c0n}
+
+## The Plan
+
+
+
+## The Detonation
+
+
+
+## The Escape
