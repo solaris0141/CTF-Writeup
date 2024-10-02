@@ -139,8 +139,6 @@ On a side note, if you just kept the original "example" rotor values which is ju
 
 ## I'll Kill Yall
 
-![before](flag_latest.png)
-
 This is the Zodiac Killer Cipher based on the Z408 cryptogram. The tricky part about this is that the image given to us is actually cropped out in the hex and we have to edit the height in hex to view the full image. 
 
 ![after](fixed.png)
