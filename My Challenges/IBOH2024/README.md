@@ -259,7 +259,7 @@ If we look closely at the key generation, we can see that this is the implementa
 
 The initial thought for this challenge was that it's as simple as just viewing the encrypted log, and throw it into the decrypt function, wouldn't we just get our flag back like that? And as expected, it returned bunch of weird bytes back, this instantly indicates that the log must have been larger than $p$. There's also this session key value that is given to us as well which is basically the key for us to fix the log corruption issue.
 
-$$ plaintext = (sessionkey - p - q)*p + enc $$
+$$ plaintext = (sessionkey - p - q)p + enc $$
 
 This would mean that we need to somehow obtain the values of p and q in some other way, which can be exploited through the encrypt and decrypt functions. 
 
@@ -271,7 +271,7 @@ $$ sp \equiv s \mod p $$
 
 $$ sp - s \equiv 0 \mod p $$
 
-$$ gcd(sp - s) = p $$
+$$ gcd(sp - s, n) = p $$
 
 $$ q = N/p^2 $$
 
@@ -363,6 +363,84 @@ The actual decrypted log we will see is
 
 
 ## The Detonation
+
+#### chall.py
+```python
+#!/usr/local/bin/python
+from secret import greenwire, blackwire, redwire, flag
+import random
+
+class DefuserModule:
+    y = blackwire
+    x = redwire
+    g = greenwire
+    
+    def __init__(self, activationNumber):
+        self.s = activationNumber
+    
+    def gen(self):
+        self.s = (self.s * self.y + self.x) % self.g
+        return self.s
+    
+def genSafetyNums(activationNumber):
+    defuser = DefuserModule(activationNumber)
+    nums = []
+    for i in range(20):
+        nums.append(defuser.gen())
+    return nums
+
+def main():
+    print("Bomb has been activated, you have 45 seconds to enter all the safety numbers to deactivate this")
+    keyvalue = random.randint(1, greenwire)
+    safetyNums = genSafetyNums(keyvalue)
+    
+    print(f"The activation key value is: {keyvalue}")
+    print("Enter the safety number if you insist on deactivating")
+    inputNums = []
+    
+    for i in range(20):
+        try:
+            nums = int(input("> "))
+            inputNums.append(nums)
+        except:
+            print("Careless mistake there, bye")
+            print("BOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOMMMMMMMMMMMMMMMMMMMMMMMMMM (loud explosion noises*)")
+            quit()
+    
+    if safetyNums == inputNums:
+        print("Bomb has been defused, here's the status code: ", flag)
+    else:
+        print("Safety numbers are false, detonating immediately")
+        print("Might as well tease you with the some of the actual safety numbers, not like you could do anything about it now")
+        print("\n".join([str(i) for i in safetyNums[:3]]))
+        print("BOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOMMMMMMMMMMMMMMMMMMMMMMMMMM (loud explosion noises*)")
+        quit()
+        
+if __name__ == "__main__":
+    main()
+else:
+    raise Exception("Problem Occured")
+```
+
+Looking at the source code, we can see that this is an implementation of the Linear Congruential Generator (LCG) which will be used to generate the 20 pseudorandom numbers that we have to guess accurately to "defuse" the bomb. We are given the seed initially and also the first 3 sequence of numbers, which is more than enough for us to calculate the constants in the generator. 
+
+### Solution
+
+LCG follow the form of:
+
+$$ a_{s+1} \equiv a_sm + c \mod n $$
+
+for $s$ is the index of sequence meaning the value of $a$ for $s = 0$ is the seed. 
+
+$$ a_1 \equiv a_0m + c \mod n $$
+
+$$ a_2 \equiv a_1m + c \mod n $$
+
+$$ a_3 \equiv a_2m + c \mod n $$
+
+We have the $a$ values for $s \in \set{ 0,1,2,3 } $, so this means we can obtain the $n$ like this:
+
+
 
 
 
