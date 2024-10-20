@@ -440,7 +440,7 @@ $$ a_3 \equiv a_2m + c \mod n $$
 
 We have the $a$ values for $s \in \set{ 0,1,2,3 } $, so this means we can obtain the $n$ like this:
 
-
+$$ a_3 - a_2 \equiv (a_2 - a_1)m + c \mod n $$
 
 
 
