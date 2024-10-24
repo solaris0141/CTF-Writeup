@@ -551,11 +551,14 @@ $$ r \equiv g^x \mod n$$
 
 where $g \in \set{2,...,n-1}$, $e = H(message \parallel r)$, $x$ is our private key and $k$ is the nonce.
 
-A total of 4 signatures are signed where each two of the signatures have close nonces. We can rearrange the equations to a basis for then LLL can be used to reduce the matrix and solve the combinatorial problem. We need to find the private key value $x$ and all the nonces value to be able to decrypt the AES CBC.
+A total of 4 signatures are signed where each two of the signatures have close nonces. We can rearrange the equations to a basis for then LLL can be used to reduce the matrix and solve the combinatorial problem. We need to find the private key value $x$ to be able to decrypt the AES CBC. For the IV if you simplify the equation $(k_1k_3)-(k_2k_1)+(k_2k_0)-(k_0k_3)$ properly it's actually just $(k_1-k_0)(k_3-k_2)$.
 
-$$ s_0 \equiv k_0 - xe \mod n-1 $$
+$$ s_0 \equiv k_0 - xe_0 \mod n-1 $$
 
-$$ s_1 \equiv k_1 - xe \mod n-1 $$
+$$ s_1 \equiv k_1 - xe_1 \mod n-1 $$
 
+We can use the fact that k1 and k0 shares the same 10 bytes in LSB, meaning we can just substract them to be left with only the 8 bytes of MSB. And this also works in our favour since we need their substracted value for calculating our IV. Let's assume that $k_1-k_0 = k_{10}$, now we can reqrite the equations as
+
+$$ s_1 - s_0 \equiv k_{10} -x(e_1 - e_0) \mod n-1 $$
 
 ### Flag
