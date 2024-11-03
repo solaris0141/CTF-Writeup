@@ -622,4 +622,129 @@ We can use the fact that k1 and k0 shares the same 10 bytes in LSB, meaning we c
 
 $$ s_1 - s_0 \equiv k_{10} -x(e_1 - e_0) \mod n-1 $$
 
+$$ (s_1 - s_0) + x(e_1 - e_0) - k_{10} + d(n-1) = 0 $$
+
+Now we can apply this to $s_3$ and $s_2$ as well and start forming the lattice for LLL.
+
+Basically we are just going to assume that there will be a vector $[A, B, C, D, E, F]$ which exist in the lattice below
+
+> [!TIP] 
+> The dimension of our vector is equal to the size of the column of the lattice so adjust the matrix based on what dimension the vector is going to be
+
+$$
+\begin{bmatrix}
+1 & 0 & 0 & 0 & s_1 - s_0 & s_3 - s_2 \\
+0 & 1 & 0 & 0 & e_1 - e_0 & e_3 - e_2 \\
+0 & 0 & 1 & 0 & 2^{80} & 0 \\
+0 & 0 & 0 & 1 & 0 & 2^{80} \\
+0 & 0 & 0 & 0 & n-1 & 0 \\
+0 & 0 & 0 & 0 & 0 & n-1 \\
+\end{bmatrix}
+$$
+
+where $A = 1$, $B = x$, $C = k_{10}$, $D = k_{32}$, $E = 0$, $F = 0$
+
+In a way we can essentially think that LLL is just a way to solve a system of equations by reduction as shown below
+
+$$ 
+A\begin{bmatrix} 1 \cr 0 \cr 0 \cr 0 \cr s_1 - s_0 \cr s_3 - s_2 \end{bmatrix} + 
+B\begin{bmatrix} 0 \cr 1 \cr 0 \cr 0 \cr e_1 - e_0 \cr e_3 - e_2 \end{bmatrix} + 
+C\begin{bmatrix} 0 \cr 0 \cr 1 \cr 0 \cr 2^{80} \cr 0 \end{bmatrix} + 
+D\begin{bmatrix} 0 \cr 0 \cr 0 \cr 1 \cr 0 \cr 2^{80} \end{bmatrix} + 
+E\begin{bmatrix} 0 \cr 0 \cr 0 \cr 0 \cr n-1 \cr 0 \end{bmatrix} + 
+F\begin{bmatrix} 0 \cr 0 \cr 0 \cr 0 \cr 0 \cr n-1 \end{bmatrix}
+= 0
+$$
+
+And since we know approximately the size of our target values, this just seems like a CVP (Closest Vector Problem) and we can utilize Babai's Nearest Plane Algorithm to find the nearest vector to our target values. We can just set our target vector be $[1,\frac{n-1}{2},-2^{64}, -2^{64}, 0, 0]$ and run Babai's algorithm.
+
+>[!NOTE]
+>There's not much info on the size of x so it's safest to approximate it at half of p-1
+
+Problem is that we will most likely not get the vector we want since the size we are searching for is too big, so it's much advisable that we add weight to our LLL instead to make it so that our target vector is smaller. We can scale each column of the lattice with the inverse of each value in the target vector which effectively normalises the lattice. 
+
+$$
+\begin{bmatrix}
+1 & 0 & 0 & 0 & s_1 - s_0 & s_3 - s_2 \\
+0 & \frac{2}{p-1} & 0 & 0 & e_1 - e_0 & e_3 - e_2 \\
+0 & 0 & \frac{1}{2^{64}} & 0 & 2^{80} & 0 \\
+0 & 0 & 0 & \frac{1}{2^{64}} & 0 & 2^{80} \\
+0 & 0 & 0 & 0 & n-1 & 0 \\
+0 & 0 & 0 & 0 & 0 & n-1 \\
+\end{bmatrix}
+$$
+
+Now our target vector has been shortened to $[1,1,-1,-1,0,0]$ since we moved the weight to the lattice. This will now return us our target vector and we can just obtain all the values we needed as mentioned before:
+
+$$ x = B \cdot \frac{p-1}{2} $$
+
+$$ k_{10} = C \cdot -2^{64} \cdot 2^{80} $$
+
+$$ k_{32} = D \cdot -2^{64} \cdot 2^{80} $$
+
+> [!NOTE]
+> $2^{80}$ is used in our basis because we only need to find the first 8 bytes ($2^{64}$ bits) of the nonce so we shift it by multiplying 10 bytes ($2^{80}$)
+
+And now we can decrypt the AES-CBC with the obtained key and IV to get our well deserved flag.
+
+```python 
+from Crypto.Util.number import *
+from Crypto.Cipher import AES
+from binascii import unhexlify
+import hashlib
+
+n = 13316430673788202801529887736850519334873344913725537338135314618165483843527881521075889824348436627215739884865635474247328880684809468647669189514656081
+enc = "7e21e34b11dd93d42eb96db4b34431d17cc0d0b4e3538ae8d1ceffae7afc093897f99517043a7a0c089c4e1163f146320ac34359fdd2c9ecace6958ff6837111ac97d8f08dd7e89d5b05ccda70836673"
+
+sig = [(2565143783015752819594261910724777913287596433407131189919894099911615300104337903926396248703754745341702882590561642996842869013009372367733859696407014, 12861122085615090697584564727303621877448426427759666474382712937617238756314308909009914137836683573403942766469389333511111831546626157137869232328911015),
+(4495938806660910359648494608070491489904359048265395989456643786208575492505615258394511347404526843767121412603756691649598065528217331055116239806589496, 393129501237457291316951827685360295863053056390027836497668335782800867457961183286759858680260026627505591281017231464415348660428381867347987506851517),
+(8177232795256518939565061005288872692421274470587619630489159555435648043544305497076060923708589689568822053495306541874659897815132801342254706837416765, 9340977643642384686595968239033362786292042213312582760368698231087594922407580002196357214993083951803524316746525451392480001222751473485443103416446522),
+(11758250073959567798007881216357896915830945009913959279623913104769894087388743438145677334547927163052305247353329442442613076194415515894400799018529731, 6599336354876906446157571429805384964481182734571804665602632838932674250476341660224571164942118783085912349978762436585209226320014841839564627661250863)
+]
+
+e = []
+for i in sig:
+    e.append(int(hashlib.sha256((enc + str(i[0])).encode()).hexdigest(), 16))
+
+lat = Matrix(
+[
+ [1, 0, 0, 0, sig[1][1] - sig[0][1], sig[3][1] - sig[2][1]],
+ [0, 2/(n-1), 0, 0, e[1] - e[0], e[3] - e[2]],
+ [0, 0, 1/(2**64), 0, 2**80, 0],
+ [0, 0, 0, 1/(2**64), 0, 2**80],
+ [0, 0, 0, 0, n-1, 0],
+ [0, 0, 0, 0, 0, n-1],
+])
+
+
+def Babai_CVP(B, target):
+    M = B.LLL()
+    G = M.gram_schmidt()[0]
+    small = target
+    for _ in range(1):
+        for i in reversed(range(M.nrows())):
+            c = ((small * G[i]) / (G[i] * G[i])).round()
+            small -= M[i] * c
+    return target - small
+
+
+vec_target = vector([1, 1, -1, -1, 0, 0])
+M = Babai_CVP(lat, vec_target)
+print(M)
+x = M[1] * (n-1) / 2
+k1_k0 = int(M[2] * -(2**64) * (2**80))
+k3_k2 = int(M[3] * -(2**64) * (2**80))
+print(x)
+print(k1_k0)
+print(k3_k2)
+
+KEY = long_to_bytes(int(x))[:16]
+iv = long_to_bytes((k3_k2)*(k1_k0))[:16]
+cipher = AES.new(KEY, AES.MODE_CBC, iv)
+flag = cipher.decrypt(unhexlify(enc))
+print(flag)
+
+```
+
 ### Flag
+> IBOH24{IT'S_TH3_F1N4L_C0uNTD0WNNNN_b4i_B41_be926d988e8a5a7ae2215026e14ec443}
