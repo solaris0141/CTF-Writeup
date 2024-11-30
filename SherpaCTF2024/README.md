@@ -68,6 +68,23 @@ We can also find what the output from **main.x** will be compared to this time a
 
 > acc9f5c9e87d8a06b841f416fb8e775be77c753edff2354b75
 
+>[!HINT]
+>We can just patch the binary by rewriting the opcode of **jz** to **jnz** for the first condition check with "SherpaSecIstheBEST" so that we can focus on the main stuff instead
+
+patch.py
+```python
+f = open('decrypted_output.bin', 'rb')
+f1 = open('output_patched.bin', 'wb')
+data = f.read()
+data_write = list(data)
+
+offset = 0x4a618c - 0x400000
+data_write[offset] = 0x75
+
+f1.write(bytearray(data_write))
+f1.close()
+```
+
 So, looks simple right? Just xor the expected output with the key and it should give me the password right? Nope, ended up receiving unreadable bytes and it isn't even correct. As long as our input after passing through **main.x** and comparing to the hex string returns true, we will then be given the flag that is going to be decrypted by a RC4 cipher. 
 
 >[!NOTE]
@@ -78,7 +95,8 @@ After a "not so long" back and forth verfying the register values, only then did
 >[!NOTE]
 >Thanks to some external help which I have gotten from my friend for the initial foundation of the brute forcing script and he actually did got the password through manual bruteforcing and inspecting the rax.
 
-```brute.py
+#### brute.py
+```python
 import gdb
 import itertools
 import re
