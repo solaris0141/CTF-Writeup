@@ -60,12 +60,18 @@ fexecve(fd, argv, argv)
 
 The zlib was decompressing a very huge base64 string so I had to cut it out from [here](toolong.txt). Based on this long base64 string I can just assume it should be the binary that is compiled in GO. So we can just run a script to decompress the string, and write the bytes back to a bin file. Now when we decompile this file, it's very confusing to read through the assembly since GO is an unfamiliar territory for me especially so I took a long time in trying to understand the whole binary. 
 
-From my analysis, we initially have to pass an arguement (look at how the python file passed the key as arguement) and this arguement will get passed into a function called **main.x**, together with another parameter which is essentially the **t** variable like how the python file generated the variable. The output of this function will then be compared to "SherpaSecIstheBEST", only allowing us to proceed if it returns true. So judging by how the python file generated our arguement, I initially thought that the **main.x** function would be just a simple xor operation. After proceeding to the next instructions, we are now asked to enter a password, and this password will also be passed into the **main.x** function together with a new key which we can find in the disassembled code.
+From my analysis, we initially have to pass an arguement (look at how the python file passed the key as arguement) and this arguement will get passed into a function called **main.x**, together with another parameter which is essentially the **t** variable like how the python file generated the variable. The output of this function will then be compared to "SherpaSecIstheBEST", only allowing us to proceed if it returns true. 
+![roadblock](roadblock1.png)
+
+So judging by how the python file generated our arguement, I initially thought that the **main.x** function would be just a simple xor operation. After proceeding to the next instructions, we are now asked to enter a password, and this password will also be passed into the **main.x** function together with a new key which we can find in the disassembled code.
+
+![key](key.png)
 
 > df0d0f4e71a184bfddc886d1da06911fcecb3d38d24ef64d0d
 
 We can also find what the output from **main.x** will be compared to this time around
 
+![expected output](expected_output.png)
 > acc9f5c9e87d8a06b841f416fb8e775be77c753edff2354b75
 
 >[!TIP]
@@ -94,6 +100,8 @@ After a "not so long" back and forth verfying the register values, only then did
 
 >[!NOTE]
 >Thanks to some external help which I have gotten from my friend for the initial foundation of the brute forcing script and he actually did got the password through manual bruteforcing and inspecting the rax.
+
+![manual](manual_bruteforce.png)
 
 #### brute.py
 ```python
@@ -156,3 +164,8 @@ class BruteforceRAX(gdb.Command):
 # Register the command in GDB
 BruteforceRAX()
 ```
+
+![flag](flag.png)
+
+### Flag 
+> SHCTF24{R0j4k_3_b1n4r135}
