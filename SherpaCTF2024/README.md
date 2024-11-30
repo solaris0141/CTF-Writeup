@@ -69,7 +69,7 @@ We can also find what the output from **main.x** will be compared to this time a
 > acc9f5c9e87d8a06b841f416fb8e775be77c753edff2354b75
 
 >[!TIP]
->We can just patch the binary by rewriting the opcode of **jz** to **jnz** for the first condition check with "SherpaSecIstheBEST" so that we can focus on the main stuff instead
+>We can just patch the binary by rewriting the opcode of **jz** to **jnz** for the first condition check with "SherpaSecIstheBEST" since  it isn't really important anymore and it's better to just bypass it from here onwards
 
 patch.py
 ```python
