@@ -58,4 +58,6 @@ fexecve(fd, argv, argv)
 
 ```
 
-The zlib was decompressing a very huge base64 string so I had to cut it out from ![here](toolong.txt)
+The zlib was decompressing a very huge base64 string so I had to cut it out from [here](toolong.txt). Based on this long base64 string I can just assume it should be the binary that is compiled in GO. So we can just run a script to decompress the string, and write the bytes back to a bin file. Now when we decompile this file, it's very confusing to read through the assembly since GO is an unfamiliar territory for me especially so I took a long time in trying to understand the whole binary. 
+
+From my analysis, we initially have to pass an arguement (look at how the python file passed the key as arguement) and this arguement will get passed into a function called *_main.x_*
