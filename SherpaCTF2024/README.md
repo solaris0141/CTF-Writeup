@@ -7,8 +7,12 @@ Just wanted to write the writeup for this specific medium rev challenge since I 
 
 From the challenge title alone, I was sort of expecting maybe executables compiled over each other in these 3 different languages, but I definitely was hoping it wouldn't be something like this. And yet, when I first decompiled the file, the feeling that what I have expected came true.
 
+During the initial disassembly analysis, the biggest thing I noticed is that there is a specific xor function done on 9437184 (0x900000) bytes to a key
+> Here is the flag! https://r.mtdv.me/here-is-the-flag
 
-
+![phase1](phase1.png)
+![xor](phase1_xor.png)
+![key](phase1_key.png)
 
 We can use the pyinstxtractor to extract the python bytecode files out and then use pycdc to translate it back to a readable source code for us. One of the files (test.pyc) that we managed to translate gave us some interesting source code that directly hinted towards the final layer of the challenge. 
 
