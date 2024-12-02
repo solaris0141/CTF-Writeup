@@ -8,7 +8,7 @@ Just wanted to write the writeup for this specific medium rev challenge since I 
 From the challenge title alone, I was sort of expecting maybe executables compiled over each other in these 3 different languages, but I definitely was hoping it wouldn't be something like this. And yet, when I first decompiled the file, the feeling that what I have expected came true.
 
 During the initial disassembly analysis by my team member H3R0US1, the biggest thing he noticed was that there is a specific xor function done on 9437184 (0x900000) bytes to a key and xor again with the index it is at. 
-> Here is the flag! https://r.mtdv.me/here-is-the-flag
+> Key: Here is the flag! https://r.mtdv.me/here-is-the-flag
 
 ![phase1](phase1.png)
 ![xor](phase1_xor.png)
@@ -41,6 +41,8 @@ with open('tmp', 'wb') as f:
 ```
 
 We can use the pyinstxtractor to extract the python bytecode files out and then use pycdc to translate it back to a readable source code for us. One of the files (test.pyc) that we managed to translate gave us some interesting source code that directly hinted towards the final layer of the challenge. 
+
+![python disassembke](pydisassembling.png)
 
 #### test.py
 ```python
@@ -90,7 +92,8 @@ fexecve(fd, argv, argv)
 
 The zlib was decompressing a very huge base64 string so I had to cut it out from [here](toolong.txt). Based on this long base64 string I can just assume it should be the binary that is compiled in GO. So we can just run a script to decompress the string, and write the bytes back to a bin file. Now when we decompile this file, it's very confusing to read through the assembly since GO is an unfamiliar territory for me especially so I took a long time in trying to understand the whole binary. 
 
-From my analysis, we initially have to pass an arguement (look at how the python file passed the key as arguement) and this arguement will get passed into a function called **main.x**, together with another parameter which is essentially the **t** variable like how the python file generated the variable. The output of this function will then be compared to "SherpaSecIstheBEST", only allowing us to proceed if it returns true. 
+From my analysis, we initially had to pass an arguement (look at how the python file passed the key as arguement) and this arguement will get passed into a function called **main.x**, together with another parameter which is essentially the **t** variable like how the python file generated the variable. The output of this function will then be compared to "SherpaSecIstheBEST", only allowing us to proceed if it returns true. 
+
 ![roadblock](roadblock1.png)
 
 So judging by how the python file generated our arguement, I initially thought that the **main.x** function would be just a simple xor operation. After proceeding to the next instructions, we are now asked to enter a password, and this password will also be passed into the **main.x** function together with a new key which we can find in the disassembled code.
