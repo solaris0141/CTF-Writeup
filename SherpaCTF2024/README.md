@@ -7,12 +7,38 @@ Just wanted to write the writeup for this specific medium rev challenge since I 
 
 From the challenge title alone, I was sort of expecting maybe executables compiled over each other in these 3 different languages, but I definitely was hoping it wouldn't be something like this. And yet, when I first decompiled the file, the feeling that what I have expected came true.
 
-During the initial disassembly analysis, the biggest thing I noticed is that there is a specific xor function done on 9437184 (0x900000) bytes to a key
+During the initial disassembly analysis by my team member H3R0US1, the biggest thing he noticed was that there is a specific xor function done on 9437184 (0x900000) bytes to a key and xor again with the index it is at. 
 > Here is the flag! https://r.mtdv.me/here-is-the-flag
 
 ![phase1](phase1.png)
 ![xor](phase1_xor.png)
 ![key](phase1_key.png)
+
+He extracted the bytes out with gdb and here is the python script that he wrote to reverse the xor to get the python executable file.
+
+```python
+def reverse_decrypt(ctx, flag):
+    flag_len = len(flag)  # Length of the flag string (should be 0x34, i.e., 52 bytes)
+    ctx = list(ctx)
+    
+    for i in range(len(ctx)):
+        ctx[i] = ctx[i] ^ ord(flag[i % flag_len]) ^ i
+
+    ctx = [val % 256 for val in ctx]
+    return bytes(ctx)
+
+def read_ctx_from_file(file_path):
+    with open(file_path, 'rb') as f:
+        ctx = f.read()
+    return ctx
+
+ctx = read_ctx_from_file('./bytes') 
+flag = 'Here is the flag! https://r.mtdv.me/here-is-the-flag'
+decrypted_data = reverse_decrypt(ctx, flag)
+
+with open('tmp', 'wb') as f:
+    f.write(decrypted_data)
+```
 
 We can use the pyinstxtractor to extract the python bytecode files out and then use pycdc to translate it back to a readable source code for us. One of the files (test.pyc) that we managed to translate gave us some interesting source code that directly hinted towards the final layer of the challenge. 
 
